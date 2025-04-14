@@ -1,0 +1,14 @@
+[project]
+name = "dynamic-sliders-comfyui"
+description = "A specialized node for ComfyUI that provides balanced weight control across multiple elements in image generation workflows, helping prevent CFG burnout while maintaining proper relationships between weights."
+version = "1.0.0"
+license = {file = "LICENSE"}
+
+[project.urls]
+Repository = "https://github.com/FunnyFinger/Dynamic-Sliders-ComfyUI"
+#  Used by Comfy Registry https://comfyregistry.org
+
+[tool.comfy]
+PublisherId = ""
+DisplayName = "Dynamic-Sliders-ComfyUI"
+Icon = ""
