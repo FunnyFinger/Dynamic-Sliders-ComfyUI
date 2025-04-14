@@ -5,7 +5,7 @@ A specialized node for ComfyUI that provides balanced weight control across mult
 ![Version](https://img.shields.io/badge/version-1.0-blue)
 ![ComfyUI](https://img.shields.io/badge/ComfyUI-compatible-green)
 
-![Dynamic Slider Pack](https://i.imgur.com/placeholder.png)
+![Dynamic Slider Pack](![image](https://github.com/user-attachments/assets/9678c125-94ef-4752-b806-8a8e171ea425))
 
 ## Table of Contents
 - [Introduction](#introduction)
