@@ -1,5 +1,7 @@
 # Dynamic Sliders Stack for ComfyUI
 
+![slider_stacker and slider_receiver](dynamic_slider_stacker_reciever_nodes.png)
+
 A custom node pack for ComfyUI providing a stack of named sliders with dynamic behavior.
 
 ## Features
@@ -7,10 +9,12 @@ A custom node pack for ComfyUI providing a stack of named sliders with dynamic b
 *   **Slider Stacker**: A node with a configurable number of named sliders (up to 50).
 *   **Slider Receiver**: Extracts the weight value of a specific slider from the stack output based on its index.
 *   **Dynamic Max Strength**: Adjusting the `slider_max_strength` scales all individual sliders proportionally.
+ ![Scaling](scaling.gif)
 *   **Dynamic Individual Sliders**: Adjusting an individual `slider_wt` updates the `slider_max_strength` to reflect the new highest value among all sliders.
 *   **String Output**: The `Slider Stacker` outputs a comma-separated string of the current weights for all active sliders.
 *   **Dynamic UI**: The stacker node automatically shows/hides slider input rows based on the `slider_count` setting.
 *   **Context Menu**: Right-click options for batch slider operations (Average, Reset, Set All to Max/Min).
+ ![context](context.gif)
 
 ## Nodes
 
