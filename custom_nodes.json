@@ -1,0 +1,8 @@
+{
+  "name": "Dynamic Sliders Stack",
+  "description": "A custom node for ComfyUI to have many sliders with interactive dynamic behavior.",
+  "version": "1.0.0",
+  "github": "https://github.com/FunnyFinger/Dynamic_Sliders_stack",
+  "tags": ["ComfyUI", "Custom Node", "Sliders", "Dynamic"],
+  "author": "FunnyFinger"
+}
