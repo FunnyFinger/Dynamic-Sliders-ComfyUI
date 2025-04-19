@@ -1,25 +1,72 @@
 # Dynamic Sliders Stack for ComfyUI
 
-![Slider Stacker and Slider Receiver](dynamic_slider_stacker_reciever_nodes.png)
+<div align="center">
+  <img src="dynamic_slider_stacker_reciever_nodes.png" alt="Slider Stacker and Slider Receiver" />
+</div>
 
-A custom node pack for ComfyUI providing a stack of named sliders with dynamic behavior.
+[![Version](https://img.shields.io/badge/version-v2.0.0-blue)](https://github.com/FunnyFinger/Dynamic_Sliders_stack/releases)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Issues](https://img.shields.io/github/issues/FunnyFinger/Dynamic_Sliders_stack)](https://github.com/FunnyFinger/Dynamic_Sliders_stack/issues)
+[![Pull Requests](https://img.shields.io/github/issues-pr/FunnyFinger/Dynamic_Sliders_stack)](https://github.com/FunnyFinger/Dynamic_Sliders_stack/pulls)
+[![Stars](https://img.shields.io/github/stars/FunnyFinger/Dynamic_Sliders_stack?style=social)](https://github.com/FunnyFinger/Dynamic_Sliders_stack/stargazers)
 
 ---
 
-## 🚀 Features
+A custom node pack for **ComfyUI** providing a stack of named sliders with dynamic behavior.
 
-- **Slider Stacker**: A node with a configurable number of named sliders (up to 50).
-- **Slider Receiver**: Extracts the weight value of a specific slider from the stack output based on its index.
-- **Dynamic Max Strength**: Adjusting the `slider_max_strength` scales all individual sliders proportionally.
+---
 
-  ![Scaling Example](scaling.gif)
+## 🎥 Demo
 
-- **Dynamic Individual Sliders**: Adjusting an individual `slider_wt` updates the `slider_max_strength` to reflect the new highest value among all sliders.
-- **String Output**: Outputs a comma-separated string of the current weights for all active sliders.
-- **Dynamic UI**: Automatically shows/hides slider input rows based on the `slider_count` setting.
-- **Context Menu**: Right-click options for batch slider operations (Average, Reset, Set All to Max/Min).
+### Contextual Features
+- **Average Contextual Adjustment**  
+  Dynamically adjusts all sliders to their average value using the context menu option. This feature is helpful for balancing all sliders evenly without manual adjustments.  
+  <div align="center">
+    <img src="https://github.com/FunnyFinger/Dynamic_Sliders_stack/blob/main/gif/context_avg.gif" alt="Average Context" width="50%" />
+  </div>
 
-  ![Context Menu Example](context.gif)
+- **Maximum Contextual Adjustment**  
+  Sets all sliders to the maximum slider value using the context menu option. This ensures that all sliders are at their highest weight for uniform maximum intensity.  
+  <div align="center">
+    <img src="https://github.com/FunnyFinger/Dynamic_Sliders_stack/blob/main/gif/context_max.gif" alt="Maximum Context" width="50%" />
+  </div>
+
+- **Minimum Contextual Adjustment**  
+  Adjusts all sliders to the minimum slider value using the context menu option. This is useful for resetting sliders to their lowest intensity.  
+  <div align="center">
+    <img src="https://github.com/FunnyFinger/Dynamic_Sliders_stack/blob/main/gif/context_min.gif" alt="Minimum Context" width="50%" />
+  </div>
+
+- **Context Reset**  
+  Resets all sliders to their default values (e.g., 1.0). This feature helps quickly return to baseline settings for all sliders.  
+  <div align="center">
+    <img src="https://github.com/FunnyFinger/Dynamic_Sliders_stack/blob/main/gif/context_reset.gif" alt="Context Reset" width="50%" />
+  </div>
+
+### Sum Lock Toggle and Sliders Sum Widget
+- **Sliders with Lock Sum On**  
+  Demonstrates how the sum lock feature maintains a constant total sum of sliders while allowing individual adjustments. It ensures that the overall weight does not exceed or drop below a set total.  
+  <div align="center">
+    <img src="https://github.com/FunnyFinger/Dynamic_Sliders_stack/blob/main/gif/sliders_locksum_on.gif" alt="Sliders Lock Sum On" width="50%" />
+  </div>
+
+- **Sliders Max with Lock Sum Off**  
+  Allows sliders to be adjusted proportionally to their maximum value without maintaining the sum lock. This is ideal for scenarios where the total weight does not need to be constrained, but you wish to control the highest value while maintaining proportionality between sliders. This has an overall scaling effect that scales the sliders with respect to the minimum (zero).  
+  <div align="center">
+    <img src="https://github.com/FunnyFinger/Dynamic_Sliders_stack/blob/main/gif/sliders_max_locksum_off.gif" alt="Sliders Max Lock Sum Off" width="50%" />
+  </div>
+
+- **Sliders Max with Lock Sum On**  
+  Demonstrates how the sum lock can be maintained while adjusting the highest value slider. This ensures all sliders are proportionally scaled with respect to their average without exceeding the allowed total sum.  
+  <div align="center">
+    <img src="https://github.com/FunnyFinger/Dynamic_Sliders_stack/blob/main/gif/sliders_max_locksum_on.gif" alt="Sliders Max Lock Sum On" width="50%" />
+  </div>
+
+- **Sliders Sum with Lock Sum Off**  
+  Highlights how sliders can be adjusted freely without sum constraints while dynamically displaying the total sum. This is useful for adjusting the sliders as a whole without changing their offsets.  
+  <div align="center">
+    <img src="https://github.com/FunnyFinger/Dynamic_Sliders_stack/blob/main/gif/sliders_sum_locksum_off.gif" alt="Sliders Sum Lock Sum Off" width="50%" />
+  </div>
 
 ---
 
@@ -29,9 +76,11 @@ A custom node pack for ComfyUI providing a stack of named sliders with dynamic b
 
 - **Inputs**:
   - `slider_max_strength` (FLOAT): The master maximum value. Adjusting this scales all sliders below it.
-  - `slider_count` (INT): Controls how many slider rows are visible and processed (1-50).
+  - `slider_count` (INT): Controls how many slider rows are visible and processed (1–50).
   - `slider_name_{i}` (STRING): A text field to name or describe the slider (optional).
-  - `({i})` (FLOAT Widget): The individual weight for this slider (0.0-2.0). Adjusting this updates the `slider_max_strength` if this slider becomes the new maximum.
+  - `({i})` (FLOAT Widget): The individual weight for this slider (0.0–2.0). Adjusting this updates the `slider_max_strength` if this slider becomes the new maximum.
+  - **Sum Lock Toggle**: A toggle to lock the total sum of all slider values. When enabled, adjusting one slider redistributes the difference proportionally across the other sliders.
+  - **Sliders Sum Widget**: Displays the total sum of all slider values in real-time.
 
 - **Output**:
   - `SLIDER_WEIGHTS` (STRING): A comma-separated string of the weight values for sliders 1 through `slider_count`, formatted to two decimal places (e.g., "1.00, 0.50, 0.75").
@@ -48,7 +97,7 @@ A custom node pack for ComfyUI providing a stack of named sliders with dynamic b
 
 - **Inputs**:
   - `weights_string` (STRING): Connect the `SLIDER_WEIGHTS` output from the `Slider Stacker` here.
-  - `index` (INT): The 1-based index of the slider whose weight you want to extract (1-50).
+  - `index` (INT): The 1-based index of the slider whose weight you want to extract (1–50).
 
 - **Output**:
   - `WEIGHT` (FLOAT): The floating-point value of the slider at the specified index (returns 0.0 if the index is out of bounds or input is invalid).
@@ -63,35 +112,16 @@ A custom node pack for ComfyUI providing a stack of named sliders with dynamic b
 
 ---
 
-## 📖 Usage Example
+## 🎯 Contributing
 
-1. Add a `Slider Stacker` node (found under the `Dynamic Sliders Stack` category).
-2. Set the `slider_count`.
-3. Adjust sliders or use right-click options.
-4. Add a `Slider Receiver` node.
-5. Connect `SLIDER_WEIGHTS` to `weights_string`.
-6. Set the `index` on the Receiver.
-7. Connect the `WEIGHT` output.
-
----
-
-## 💡 Use Case Scenarios
-
-This node setup provides a centralized control panel for managing multiple numerical weights within your workflow. Here are a few examples:
-
-- **Multiple LoRA Weights**: Assign each slider to a different LoRA. Use the `Slider Stacker` to adjust the overall impact (`slider_max_strength`) or fine-tune individual LoRA weights. Use `Slider Receiver` to retrieve specific weights.
-- **Prompt Segment Weighting**: Control the emphasis of different parts of a prompt.
-- **Embedding/Textual Inversion Strength**: Manage multiple embeddings by connecting `Slider Receiver` outputs to nodes that adjust their strength.
-- **Style/Character Consistency**: Group controls for multiple elements (LoRAs, weights) onto one `Slider Stacker` for centralized adjustments.
-- **Controlling Custom Node Parameters**: Control FLOAT inputs for strength, weight, etc., in custom nodes with `Slider Receiver` outputs.
-- **Centralized Control Panel**: Use one or more `Slider Stacker` nodes to create a 'dashboard' for managing weights.
+We welcome contributions! If you have suggestions for improvements or new features, please [open an issue](https://github.com/FunnyFinger/Dynamic_Sliders_stack/issues) or [submit a pull request](https://github.com/FunnyFinger/Dynamic_Sliders_stack/pulls).
 
 ---
 
 ## 📜 License
 
-Check the LICENSE file. Remember to update the placeholder copyright line `Copyright (c) 2024 Your Name or Project Name Here` with the correct year and your name/project name.
+This project is licensed under the [MIT License](LICENSE).
 
 ---
 
-This version improves readability and organizes the sections more effectively. Let me know if you’d like further adjustments!
+Made with ❤️ by [FunnyFinger](https://github.com/FunnyFinger)
