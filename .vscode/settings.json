@@ -1,0 +1,65 @@
+{
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": null,
+    "editor.tabSize": 4,
+    "editor.insertSpaces": true,
+    "editor.detectIndentation": false,
+    "[python]": {
+        "editor.defaultFormatter": "ms-python.python",
+        "editor.formatOnSave": true,
+        "editor.rulers": [
+            100
+        ],
+        "editor.codeActionsOnSave": {
+            "source.organizeImports": "explicit"
+        }
+    },
+    "[javascript]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.formatOnSave": true,
+        "editor.rulers": [
+            120
+        ]
+    },
+    "python.linting.enabled": true,
+    "python.linting.pylintEnabled": true,
+    "python.formatting.provider": "autopep8",
+    "python.formatting.autopep8Args": [
+        "--max-line-length",
+        "100"
+    ],
+    "javascript.format.semicolons": "insert",
+    "javascript.preferences.quoteStyle": "double",
+    "files.associations": {
+        "*.py": "python",
+        "*.js": "javascript"
+    },
+    "search.exclude": {
+        "**/__pycache__": true,
+        "**/.git": true
+    },
+    "files.exclude": {
+        "**/__pycache__": true,
+        "**/*.pyc": true
+    },
+    "explorer.fileNesting.enabled": true,
+    "explorer.fileNesting.patterns": {
+        "*.py": "${capture}.pyc, ${capture}__pycache__",
+        "package.json": "package-lock.json"
+    },
+    "files.insertFinalNewline": true,
+    "files.trimTrailingWhitespace": true,
+    // ComfyUI-specific settings
+    "workbench.colorCustomizations": {
+        "editorRuler.foreground": "#5c5c5c36"
+    },
+    // AI-assisted development settings
+    "github.copilot.enable": {
+        "*": true,
+        "yaml": true,
+        "plaintext": true,
+        "markdown": true,
+        "python": true,
+        "javascript": true
+    }
+}

@@ -8,24 +8,28 @@ NODE_NAME = "Slider Stacker (DSS)" # Internal name, keep suffix for uniqueness
 class TSC_Slider_Stacker_Standalone:
     @classmethod
     def INPUT_TYPES(cls):
-        # ... (rest of INPUT_TYPES remains the same) ...
         max_sliders = 50
         inputs = {
             "required": {
-                "slider_max_strength": ("FLOAT", {"default": 1.00, "min": 0.0, "max": 2.0, "step": 0.01, "precision": 2, "display": "number"}),
-                "slider_count": ("INT", {"default": 1, "min": 0, "max": max_sliders, "step": 1}),
+                "sliders_max": ("FLOAT", {"default": 1.00, "min": 0.0, "max": 2.0, "step": 0.01, "precision": 2, "display": "number"}),
+                "sliders_count": ("INT", {"default": 1, "min": 1, "max": max_sliders, "step": 1}),
+                "sliders_sum": ("FLOAT", {"default": 0.0, "min": 0.0, "max": 9999.0, "step": 0.01, "precision": 2, "display": "number"}),
+                "lock_sum": ("BOOLEAN", {"default": False, "label_on": "on", "label_off": "off"})
             }
         }
+
+        # Define all possible widgets without the hidden flag initially
         for i in range(1, max_sliders + 1):
-            inputs["required"][f"slider_name_{i}"] = ("STRING", {"multiline": False, "default": "None"})
+            inputs["required"][f"slider_name_{i}"] = ("STRING", {"multiline": False, "default": "None"}) # Removed hidden: True
             widget_name = f"({i})"
-            inputs["required"][widget_name] = ("FLOAT", { 
-                "default": 1.0, 
-                "min": 0.0,      
-                "max": 2.0,      
-                "step": 0.01,     
-                "precision": 2,    
-                "display": "slider" 
+            inputs["required"][widget_name] = ("FLOAT", {
+                "default": 1.0,
+                "min": 0.0,
+                "max": 2.0,
+                "step": 0.01,
+                "precision": 2,
+                "display": "slider"
+                # Removed hidden: True
             })
         return inputs
 
@@ -35,16 +39,26 @@ class TSC_Slider_Stacker_Standalone:
     # Updated Category
     CATEGORY = "Dynamic Sliders Stack"
 
-    # ... (slider_stacker function remains the same) ...
-    def slider_stacker(self, slider_max_strength, slider_count, **kwargs):
-        sliders_available = [kwargs.get(f"slider_name_{i}") for i in range(1, slider_count + 1)]
-        weights_raw = [kwargs.get(f"({i})") for i in range(1, slider_count + 1)]
-        safe_max_strength = max(0.0, slider_max_strength)
-        weights_clamped_by_widget = [max(0.0, min(w, 2.0)) for w in weights_raw] 
+    # Add compatibility attributes for newer ComfyUI versions
+    TITLE = "Slider Stacker"
+    TYPE = "Slider Stacker (DSS)"
+
+    # Removed __init__, onNodeLoad, update_slider_visibility, getWidgets, onExecute overrides
+    # Let JS handle the dynamic visibility
+
+    def slider_stacker(self, sliders_max, sliders_count, sliders_sum=None, lock_sum=False, **kwargs):
+        # Clamp sliders_count to a valid range (1 to 50)
+        sliders_count = max(1, min(int(sliders_count), 50))
+
+        # Regular processing using the validated sliders_count
+        sliders_available = [kwargs.get(f"slider_name_{i}") for i in range(1, sliders_count + 1)]
+        weights_raw = [kwargs.get(f"({i})") for i in range(1, sliders_count + 1)]
+        safe_max_strength = max(0.0, sliders_max)
+        weights_clamped_by_widget = [max(0.0, min(w, 2.0)) for w in weights_raw]
         weights_clamped_final = [min(w, safe_max_strength) for w in weights_clamped_by_widget]
         active_weights = []
-        for i in range(slider_count):
-            active_weights.append(f"{weights_clamped_final[i]:.2f}") 
+        for i in range(sliders_count):
+            active_weights.append(f"{weights_clamped_final[i]:.2f}")
         weights_string = ", ".join(active_weights)
         return (weights_string,)
 
@@ -56,4 +70,4 @@ NODE_CLASS_MAPPINGS = {
 # Updated Display Name
 NODE_DISPLAY_NAME_MAPPINGS = {
     NODE_NAME: "Slider Stacker" # Removed suffix for cleaner UI
-} 
+}

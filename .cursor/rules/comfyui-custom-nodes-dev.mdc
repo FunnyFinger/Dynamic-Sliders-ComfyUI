@@ -1,0 +1,283 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# ComfyUI Custom Node Development Guidelines
+
+## Specialization
+- You are an AI assistant specialized in ComfyUI custom node development.
+
+## General Guidelines
+- Follow these guidelines when helping with this project:
+
+## Project Context
+- This is a custom node for ComfyUI called "Dynamic Sliders Stack"
+- The node provides dynamic slider widgets that can be configured and controlled as a group
+- It has both Python backend (defining node structure and processing) and JavaScript frontend (UI behavior)
+- ComfyUI has significantly changed its frontend architecture, requiring adaptation for compatibility
+
+## Architecture Knowledge
+- ComfyUI nodes are defined as Python classes with specific methods like INPUT_TYPES() and FUNCTION
+- Node UI behavior is controlled by JavaScript files that use ComfyUI extension system
+- Communication between frontend and backend happens through serialized values
+- ComfyUI uses a node-based graph structure where nodes perform operations and are connected via links
+- Workflow data is stored in JSON format that defines nodes, connections, and widget values
+- The modern ComfyUI frontend is built with Vue 3, TypeScript, and Pinia for state management
+- The legacy frontend and new frontend can have different API patterns and requirements
+
+## Frontend Architecture Versions
+- Legacy: Vanilla JavaScript-based system
+- Modern: Vue 3 + TypeScript with PrimeVue and TailwindCSS
+- Custom nodes need to detect and adapt to the frontend version being used
+- The modern frontend uses a different extension registration pattern and API
+
+## JavaScript (Frontend) Patterns - Legacy
+- Use `app.registerExtension({})` to register UI behavior
+- Use the nodeCreated callback to initialize node behavior
+- Widget values should be intercepted to handle user interactions
+- Always prevent feedback loops when programmatically changing widget values
+- Add `_isUpdatingInternally` flags to prevent update loops
+- Consider using DOM mutation observers to detect changes to node elements
+- Set up proper cleanup in onRemoved callbacks to prevent memory leaks
+
+## JavaScript (Frontend) Patterns - Modern
+- Use the new extension registration API with proper naming conventions
+- Handle UI components through Vue composition APIs rather than direct DOM manipulation
+- Use the new dialog, toast, and settings APIs for user interactions
+- Rely on the component system rather than direct DOM manipulation
+- Use the new event system for communication between components
+- Follow the TypeScript typing conventions for better integration
+- Consider using the new sidebar, commands, and keybinding registration APIs
+
+## Compatibility Strategy
+- Consider supporting both legacy and modern frontends using feature detection
+- Create proper cleanup for event listeners and DOM modifications
+- Use the frontend version flags to conditionally use appropriate APIs
+- Test thoroughly on both legacy and modern frontends
+- Consider using the ComfyUI Legacy Frontend option during transition
+- Import legacy paths conditionally and with fallbacks
+- Consider gradual migration rather than complete rewrite when feasible
+- Use the new import paths for modern frontend: `app.extensionManager.*` APIs
+
+## Python (Backend) Patterns
+- Define INPUT_TYPES() to specify node inputs and widgets
+- Define RETURN_TYPES and RETURN_NAMES for outputs
+- Implement the main processing function as specified in FUNCTION
+- Use good error handling for invalid inputs
+- Properly type cast values received from the frontend
+- Follow the node definition schema for proper integration with ComfyUI
+- Consider adding category, display_name and description attributes for better organization
+
+## Node Definition Structure
+- Each node must define INPUT_TYPES() method returning a dictionary of inputs
+- Widget types include INT, FLOAT, STRING, BOOLEAN, COMBO with appropriate parameters
+- Widgets can have properties like default, min/max, step, display type
+- Optional attributes like 'hidden', 'default_input', and 'tooltip' provide additional control
+- RETURN_TYPES defines the output data types that other nodes can connect to
+- FUNCTION attribute specifies the main method that processes inputs and returns outputs
+- Define CATEGORY to organize where your node appears in the menu
+
+## Modern Frontend APIs
+- Use `app.registerExtension({name: 'MyExtension', ...})` for registration
+- For dialog interfaces: `app.extensionManager.dialog.prompt/confirm/alert()`
+- For notifications: `app.extensionManager.toast.add()`
+- For settings: Register with `app.registerExtension({settings: [...]})`
+- For accessing settings: `app.extensionManager.setting.get/set()`
+- For custom UI: Use the sidebar tab API, bottom panel tabs API, and toolbox APIs
+- For keybindings: Register with `app.registerExtension({commands: [...], keybindings: [...]})`
+- For menus: Add to topbar with `app.registerExtension({menuCommands: [...]})`
+
+## Workflow JSON Understanding
+- ComfyUI workflows are stored as JSON with nodes, links, and widget values
+- Each node has an ID, type, position, inputs, outputs, and widget values
+- Links connect outputs of one node to inputs of another
+- Understanding the JSON structure helps with debugging and programmatic workflow creation
+- Custom nodes should properly serialize/deserialize their state within this format
+
+## Styling and Conventions
+- Use camelCase for JavaScript variables and functions
+- Use snake_case for Python variables and functions
+- Add detailed comments for complex logic
+- Follow the existing code formatting conventions
+- Keep logic modular and functions focused on a single responsibility
+- For modern frontend, follow Vue 3 and TypeScript conventions
+- Consider using PrimeVue icons and components for consistent UI
+
+## Specific Project Knowledge
+- Slider values can be normalized to maintain relative proportions
+- The "total_sum" widget shows the sum of all active sliders
+- Widget values are intercepted to handle complex interactions
+- The node UI updates dynamically based on slider_count changes
+
+## Read-Only Widget Implementation
+- For truly read-only widgets, use a multi-layered constraint approach:
+  1. Replace the widget's DOM element with a styled read-only display
+  2. Constrain the widget's min/max values to be extremely close to the actual value
+  3. Use periodic checks to ensure constraints are maintained
+  4. Add mutation observers to detect DOM changes and reapply protection
+  5. Set both inputEl.readOnly and style.pointerEvents to block interaction
+- The `constrainWidgetRange` function is the preferred way to make widgets immovable
+- Key components needed:
+  - A function to calculate the precise epsilon based on widget precision
+  - A display element that visually indicates read-only state
+  - A value property interceptor that maintains constraints
+  - A periodic check interval for persistent protection
+- Apply this pattern to any widgets that should display calculated values without user modification
+- For modern frontend, investigate component-based approaches rather than DOM manipulation
+
+## Preventing Overshooting in Interactive UI Elements
+- When implementing interactive UI elements with rapid value changes, use these techniques to prevent overshooting:
+  1. Use immutable reference values to maintain stable relationships between values
+     - Store original relative values (like offsets or ratios) separate from current state
+     - Never modify these reference values during user interactions
+     - Always derive new values from these stable references, not from current values
+  2. Implement precise mathematical boundaries
+     - Pre-calculate the exact theoretical minimum and maximum values
+     - Consider all constraints and relationships between elements when determining limits
+     - Apply hard limits before any UI updates occur
+  3. Use direct value calculation instead of incremental changes
+     - Prefer formula-based updates over incremental adjustments
+     - Calculate target values directly from input parameters
+     - Avoid chains of operations that can accumulate rounding errors
+  4. Handle edge cases explicitly with special logic
+     - Implement special handling for boundary values (minimum, maximum)
+     - At boundaries, set exact values rather than attempting to calculate them
+     - For grouped elements, consider relative relationships at boundaries
+  5. Use atomic updates for related elements
+     - Calculate all new values before applying any changes
+     - Apply all updates in a single batch to prevent inconsistent intermediate states
+     - Verify the resulting state meets expected constraints
+  6. Implement post-update verification
+     - Check if any values exceed defined limits after updates
+     - Add correction mechanisms for any unexpected values
+     - Use appropriate flags to prevent recursive update loops
+  7. Consider the timing of events
+     - Be aware of when events fire during rapid user interactions
+     - Add appropriate flags to track update source (user vs. programmatic)
+     - Avoid recalculating reference values during interaction-driven updates
+
+## Publishing and Distribution
+- Add proper documentation and examples to help users understand your node
+- Create a comprehensive README.md with installation instructions and examples
+- Consider following the Registry standards for better integration with ComfyUI Manager
+- Include a pyproject.toml file with metadata about your custom node
+- Set up proper version control and tagging for releases
+- Test your node on different platforms and ComfyUI versions
+- Specify frontend version compatibility in your documentation
+- Consider providing legacy and modern versions if needed
+
+## Best Practices
+- Always test suggested changes with edge cases
+- Ensure backward compatibility where possible
+- Keep performance in mind, especially for operations that might run many times
+- Use descriptive variable names that reflect their purpose
+- Validate user inputs before processing
+- Clean up intervals and observers when nodes are removed
+- Prefer component-based approaches over direct DOM manipulation in modern frontend
+- Consider adding tooltips to explain widget functionality
+- Refactor whenever possible
+- Test with both legacy and modern frontend versions
+- simplyfy the code as much as possible
+- factorize the code as much as possible
+- use the best practices for the modern frontend
+- use loops and arrays as much as possible
+- reduce the number of lines of code as much as possible
+- use default and native methods as much as possible
+- do not reinvent the wheel, use the best tools and libraries available
+- do nit exceed 500 lines of code in any file
+
+## Common Challenges
+- DOM elements might not be available immediately after node creation
+- Widget value updates can cause infinite loops if not carefully managed
+- ComfyUI might use older JavaScript standards, avoid very modern syntax
+- Consider both desktop and mobile interactions for widgets
+- Widget elements may be regenerated by ComfyUI, requiring reapplication of custom behavior
+- Handle backward compatibility when updating node definitions
+- Import paths may change between frontend versions
+- Extension registration patterns differ between legacy and modern frontends
+- Component-based UIs require different interaction patterns than direct DOM manipulation
+
+## Testing
+- Test with different slider counts
+- Verify sum calculations are accurate
+- Check that normalization preserves relative proportions
+- Ensure read-only widgets remain non-interactive under all conditions
+- Test with rapid interactions to verify stability
+- Test your node with different workflows and edge cases
+- Verify proper cleanup when nodes are removed from the workflow
+- Test with both legacy and modern frontend versions
+- Test with different frontend version flags
+
+## Troubleshooting Frontend Version Issues
+- Run ComfyUI with legacy frontend for testing: `--front-end-version Comfy-Org/ComfyUI_legacy_frontend@latest`
+- Try specific versions for compatibility testing: `--front-end-version Comfy-Org/ComfyUI_frontend@x.y.z`
+- Check browser console for API-related errors
+- Use feature detection rather than version checking when possible
+- Implement graceful fallbacks for unsupported features
+- Consider conditional imports based on detected frontend version
+- Watch for API deprecation warnings in console output
+- for debugging, avoid triggering many logs in loops
+-
+
+## Vue 3 Composition API .cursorrules
+
+## Vue 3 Composition API best practices
+```javascript
+const vue3CompositionApiBestPractices = [
+  "Use setup() function for component logic",
+  "Utilize ref and reactive for reactive state",
+  "Implement computed properties with computed()",
+  "Use watch and watchEffect for side effects",
+  "Implement lifecycle hooks with onMounted, onUpdated, etc.",
+  "Utilize provide/inject for dependency injection",
+  "Use vue 3.5 style of default prop declaration. Example:",
+  "const { nodes, showTotal = true } = defineProps<{",
+  "  nodes: ApiNodeCost[]",
+  "  showTotal?: boolean",
+  "}>()",
+  "",
+  "",
+  "Organize vue component in <template> <script> <style> order",
+]
+```
+
+## Folder structure
+```
+const folderStructure = `
+src/
+  components/
+  constants/
+  composables/
+  views/
+  stores/
+  services/
+  App.vue
+  main.ts
+`;
+```
+
+## Tailwind CSS best practices
+```javascript
+const tailwindCssBestPractices = [
+  "Use Tailwind CSS for styling",
+  "Implement responsive design with Tailwind CSS",
+]
+```
+
+## Additional instructions
+```
+const additionalInstructions = `
+1. Leverage VueUse functions for performance-enhancing styles
+2. Use lodash for utility functions
+3. Use TypeScript for type safety
+4. Implement proper props and emits definitions
+5. Utilize Vue 3's Teleport component when needed
+6. Use Suspense for async components
+7. Implement proper error handling
+8. Follow Vue 3 style guide and naming conventions
+9. Use Vite for fast development and building
+10. Use vue-i18n in composition API for any string literals. Place new translation
+entries in src/locales/en/main.json.
+`;
+```

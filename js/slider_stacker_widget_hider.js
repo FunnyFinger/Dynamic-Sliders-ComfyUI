@@ -1,150 +1,209 @@
 import { app } from "../../scripts/app.js";
 
-// --- Start: Simplified code snippets --- 
-
-let origProps = {};
-let initialized = false; 
-
+// Helper function to find a widget by name
 const findWidgetByName = (node, name) => {
     return node.widgets ? node.widgets.find((w) => w.name === name) : null;
 };
 
-const doesInputWithNameExist = (node, name) => {
-    return node.inputs ? node.inputs.some((input) => input.name === name) : false;
-};
-
-const HIDDEN_TAG = "tschide";
-function toggleWidget(node, widget, show = false, suffix = "") {
-    // ... (toggleWidget function remains the same) ...
-    if (!widget || doesInputWithNameExist(node, widget.name)) return;
-    if (!origProps[widget.name]) {
-        origProps[widget.name] = { origType: widget.type, origComputeSize: widget.computeSize };
-    }
-    const origSize = node.size;
-    widget.type = show ? origProps[widget.name].origType : HIDDEN_TAG + suffix;
-    widget.computeSize = show ? origProps[widget.name].origComputeSize : () => [0, -4];
-    widget.linkedWidgets?.forEach(w => toggleWidget(node, w, ":" + widget.name, show));
-    let newHeight = node.size[1]; 
-    try {
-        if (node.computeSize) {
-             newHeight = node.computeSize()[1];
-        } else if (node.onResize) {
-             node.onResize(node.size);
-             newHeight = node.size[1];
-        } 
-    } catch (e) {
-        console.error("Error computing node size for", node.getTitle(), e);
-    }
-    node.setSize([node.size[0], newHeight]);
-}
-
-function generateWidgetNames(baseName, count) {
-    return Array.from({ length: count }, (_, i) => `${baseName}_${i + 1}`);
-}
-
-function handleSliderVisibility(node, countValue) {
-    const node_type = "Slider Stacker";
-    const baseNamesMap = {
-        "Slider Stacker": ["slider_name", ""]
-    };
-    const baseNames = baseNamesMap[node_type];
-    if (!baseNames) return;
-    const sliderCountWidget = findWidgetByName(node, "slider_count");
-    const maxSliders = sliderCountWidget?.options?.max || 50; 
-    for (let i = 1; i <= maxSliders; i++) { 
-        const nameWidget = findWidgetByName(node, `${baseNames[0]}_${i}`);
-        const weightWidget = findWidgetByName(node, `(${i})`);
-        const currentCount = Number(countValue) || 0;
-        const show = i <= currentCount;
-        toggleWidget(node, nameWidget, show);
-        toggleWidget(node, weightWidget, show);
-    }
-    node.graph.setDirtyCanvas(true, true);
-}
-
-function handleSliderStackerSliderCount(node, widget) {
-    handleSliderVisibility(node, widget.value);
-}
-
-// Updated handler map key to match new display name
-const nodeWidgetHandlers = {
-    "Slider Stacker": { // Updated node title check
-        'slider_count': handleSliderStackerSliderCount
-    }
-};
-
-function widgetLogic(node, widget) {
+// Function to check if node is our Slider Stacker
+function isSliderStackerNode(node) {
     const nodeTitle = node.getTitle ? node.getTitle() : node.title;
-    // Use the potentially updated title for the handler check
-    const handler = nodeWidgetHandlers[nodeTitle]?.[widget.name]; 
-    if (handler) {
-        handler(node, widget);
-    }
+    if (nodeTitle === "Slider Stacker") return true;
+    if (node.type === "Slider Stacker (DSS)") return true;
+    return false;
 }
 
-// --- End: Simplified code snippets --- 
+// Constants for hiding
+const HIDDEN_TAG = "_hidden_"; // Needs a unique suffix if other nodes use similar tags
 
-app.registerExtension({
-    // Updated extension name
-    name: "Comfy.DynamicSlidersStack.WidgetHider",
-    nodeCreated(node) {
-        const nodeTitle = node.getTitle ? node.getTitle() : node.title;
-        // Check for the new display name
-        if (nodeTitle === "Slider Stacker") { 
-            let hasSliderStackerHandler = false; 
+// Cache for original widget properties
+let originalWidgetProps = {};
 
-            for (const w of node.widgets || []) {
-                 // Use updated title for handler check
-                 if (nodeWidgetHandlers[nodeTitle]?.[w.name]) { 
-                     hasSliderStackerHandler = true;
-                 }
-            }
+// Function to toggle widget visibility using standard JS properties
+function toggleWidgetVisibility(node, widget, show) {
+    if (!widget) return false; // Return false if no widget
 
-            if(hasSliderStackerHandler) {
-                for (const w of node.widgets) {
-                    // Use updated title for handler check
-                    if (nodeWidgetHandlers[nodeTitle]?.[w.name]) { 
-                        // ... (value interception logic remains the same) ...
-                        let widgetValue = w.value;
-                        let originalDescriptor = Object.getOwnPropertyDescriptor(w, 'value');
-                        if (!originalDescriptor) {
-                            let proto = Object.getPrototypeOf(w);
-                            while (proto && !originalDescriptor && proto !== Object.prototype) {
-                                originalDescriptor = Object.getOwnPropertyDescriptor(proto, 'value');
-                                proto = Object.getPrototypeOf(proto);
-                            }
-                        }
-                        Object.defineProperty(w, 'value', {
-                            configurable: true, 
-                            enumerable: true,   
-                            get() {
-                                let valueToReturn = originalDescriptor?.get
-                                    ? originalDescriptor.get.call(w)
-                                    : widgetValue;
-                                return valueToReturn;
-                            },
-                            set(newVal) {
-                                if (originalDescriptor?.set) {
-                                    originalDescriptor.set.call(w, newVal);
-                                } else {
-                                    widgetValue = newVal;
-                                }
-                                widgetLogic(node, w);
-                            }
-                        });
-                         widgetLogic(node, w);
-                    }
-                }
-            }
-            // Trigger full node redraw after setup
-            setTimeout(() => { 
-                const sliderCountWidget = findWidgetByName(node, "slider_count");
-                if (sliderCountWidget) { 
-                    handleSliderVisibility(node, sliderCountWidget.value);
-                } else {
-                     node.graph.setDirtyCanvas(true, true);
-                }
-             }, 50); 
+    // Store original properties if not already saved
+    const widgetKey = `${node.id}_${widget.name}`;
+    if (!originalWidgetProps[widgetKey]) {
+        originalWidgetProps[widgetKey] = {
+            origType: widget.type,
+            origComputeSize: widget.computeSize,
+            origHidden: widget.hidden // Store original hidden state if available
+        };
+    }
+
+    const origProps = originalWidgetProps[widgetKey];
+    // Check both hidden property and our custom type tag
+    const isCurrentlyHidden = widget.hidden || widget.type === HIDDEN_TAG;
+
+    // Only change if the state needs toggling
+    if (show && !isCurrentlyHidden) return false; // Return false: no change needed
+    if (!show && isCurrentlyHidden) return false; // Return false: no change needed
+
+    if (show) {
+        // Restore original properties
+        widget.type = origProps.origType;
+        widget.hidden = origProps.origHidden || false;
+        widget.computeSize = origProps.origComputeSize || null; // Restore original or set to null
+    } else {
+        // Hide the widget
+        widget.type = HIDDEN_TAG;
+        widget.hidden = true;
+        widget.computeSize = () => [0, -4]; // Standard way to hide widget space
+    }
+
+    // Mark the node as needing redraw
+    node.setDirtyCanvas(true, false); // Only redraw foreground (nodes)
+    return true; // Return true: change was made
+}
+
+// Function to handle the actual update of slider visibility
+function updateSliderWidgetsVisibility(node) {
+    if (!isSliderStackerNode(node) || !node.widgets) return;
+
+    const countWidget = findWidgetByName(node, "sliders_count");
+    if (!countWidget) {
+        // Don't log error repeatedly if widget is just missing temporarily during load
+        return;
+    }
+
+    let currentCount = 1;
+    try {
+        currentCount = parseInt(countWidget.value) || 1;
+        currentCount = Math.max(1, Math.min(currentCount, 50)); // Clamp value (min 1)
+    } catch (e) {
+        console.error("Slider Stacker: Error parsing sliders_count value", e); // Keep error log
+        currentCount = 1; // Default to 1 on error
+    }
+
+    const maxSliders = 50; // Assuming max 50 sliders based on Python code
+    let visibilityChanged = false;
+    // Store current width to preserve it
+    const currentWidth = node.size[0];
+
+    for (let i = 1; i <= maxSliders; i++) {
+        const nameWidget = findWidgetByName(node, `slider_name_${i}`);
+        const sliderWidget = findWidgetByName(node, `(${i})`);
+        const shouldShow = i <= currentCount;
+
+        let nameChanged = false;
+        let sliderChanged = false;
+
+        if (nameWidget) {
+            nameChanged = toggleWidgetVisibility(node, nameWidget, shouldShow);
+        }
+        if (sliderWidget) {
+            sliderChanged = toggleWidgetVisibility(node, sliderWidget, shouldShow);
+        }
+
+        if (nameChanged || sliderChanged) {
+            visibilityChanged = true;
         }
     }
-}); 
+
+    // Trigger a resize and redraw if visibility actually changed
+    if (visibilityChanged && node.graph) {
+        // Recalculate the required size based on visible widgets
+        let newHeight = node.size[1]; // Default to current height
+        if (node.computeSize) {
+            try {
+                const computedSize = node.computeSize();
+                if (computedSize && computedSize.length === 2) {
+                    newHeight = computedSize[1]; // Get the computed height
+                }
+            } catch (e) {
+                // Keep error log
+                console.error("Slider Stacker: Error computing node size after visibility change", e);
+            }
+        }
+
+        // Set the size, preserving width and using the new height
+        node.setSize([currentWidth, newHeight]);
+
+        // Mark the whole graph canvas as dirty to ensure redraw and layout adjustment
+        node.graph.setDirtyCanvas(true, true);
+    }
+}
+
+// Main App Extension
+app.registerExtension({
+    name: "Comfy.DynamicSlidersStack.WidgetHider.JS",
+
+    // Called once per node type before registration
+    beforeRegisterNodeDef(nodeType, nodeData, appInstance) {
+        if (nodeData.name === "Slider Stacker (DSS)") {
+            // Store original onConfigure if it exists
+            const originalOnConfigure = nodeType.prototype.onConfigure;
+
+            // Override onConfigure to apply initial visibility
+            nodeType.prototype.onConfigure = function(info) {
+                if (originalOnConfigure) {
+                    originalOnConfigure.apply(this, arguments);
+                }
+                requestAnimationFrame(() => updateSliderWidgetsVisibility(this));
+            };
+
+            // Store original onConnectionsChange if it exists
+            const originalOnConnectionsChange = nodeType.prototype.onConnectionsChange;
+
+            // Override onConnectionsChange to potentially update visibility if needed
+            nodeType.prototype.onConnectionsChange = function(side, slot, connect, link_info, output) {
+                if (originalOnConnectionsChange) {
+                    originalOnConnectionsChange.apply(this, arguments);
+                }
+                 requestAnimationFrame(() => updateSliderWidgetsVisibility(this));
+            };
+        }
+    },
+
+    // Called every time a node instance is created
+    nodeCreated(node) {
+        if (!isSliderStackerNode(node)) return;
+
+        const countWidget = findWidgetByName(node, "sliders_count");
+        if (!countWidget) {
+            // Don't log error repeatedly
+            return;
+        }
+
+        // Intercept the 'value' property of the sliders_count widget
+        let widgetValue = countWidget.value;
+        const descriptor = Object.getOwnPropertyDescriptor(countWidget, 'value');
+
+        Object.defineProperty(countWidget, 'value', {
+            configurable: true,
+            enumerable: true,
+            get() {
+                return descriptor?.get ? descriptor.get.call(countWidget) : widgetValue;
+            },
+            set(newVal) {
+                let changedValue = newVal;
+                // Ensure value is at least 1
+                changedValue = Math.max(1, parseInt(changedValue) || 1);
+
+                if (descriptor?.set) {
+                    descriptor.set.call(countWidget, changedValue);
+                } else {
+                    widgetValue = changedValue;
+                }
+                // Update input element visually if it exists
+                if(countWidget.inputEl) {
+                    countWidget.inputEl.value = changedValue;
+                }
+                requestAnimationFrame(() => updateSliderWidgetsVisibility(node));
+            }
+        });
+
+        // Initial setup - apply visibility based on the default/loaded value
+        requestAnimationFrame(() => updateSliderWidgetsVisibility(node));
+    },
+
+    // Called when node is added to the graph (might be redundant with nodeCreated)
+    nodeAdded(node) {
+         if (!isSliderStackerNode(node)) return;
+         requestAnimationFrame(() => updateSliderWidgetsVisibility(node));
+    }
+});
+
+// console.log("Loaded Dynamic Sliders Stack Widget Hider Script");

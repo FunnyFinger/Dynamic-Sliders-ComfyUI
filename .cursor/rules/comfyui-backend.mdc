@@ -1,0 +1,51 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+ # ComfyUI Backend (Python) Node Development Guidelines
+
+These rules supplement general clean code guidelines and focus specifically on creating Python backend code for ComfyUI custom nodes, based on official documentation patterns.
+
+## Node Class Structure
+- **Define nodes as Python classes.**
+- **Implement `INPUT_TYPES(cls)`:**
+    - Return a dictionary with keys `"required"`, `"optional"`, and potentially `"hidden"`.
+    - Each value should be a dictionary mapping input names (strings) to input definitions.
+    - Input definitions are tuples: `(TYPE_STRING, OPTIONS_DICT)`.
+- **Implement `RETURN_TYPES`:** Define as a tuple of output type strings (e.g., `("IMAGE", "MASK")`).
+- **Implement `RETURN_NAMES`:** Define as a tuple of output name strings, matching `RETURN_TYPES`.
+- **Implement `FUNCTION`:** String name of the main execution method.
+- **Define `CATEGORY`:** String specifying the node's category in the UI menu (e.g., `"MyNodes/Utils"`).
+- **Define `OUTPUT_NODE`:** Set to `True` if the node doesn't modify inputs for the execution graph (useful for display nodes, save nodes, etc.), otherwise `False` (or omit).
+
+## Naming Conventions
+- **Use `NODE_CLASS_MAPPINGS`:** Dictionary mapping an internal node name (string) to the node class.
+- **Use `NODE_DISPLAY_NAME_MAPPINGS`:** Dictionary mapping the internal node name to a user-friendly display name.
+- **Choose descriptive display names.** Internal names can be more specific if needed for uniqueness.
+
+## Input/Output Handling
+- **Main Function Signature:** The method named in `FUNCTION` must accept arguments corresponding *exactly* to the keys defined in the `"required"` and `"optional"` dictionaries within `INPUT_TYPES`. Use `**kwargs` to handle arbitrary inputs if using dynamic input techniques.
+- **Input Options (`OPTIONS_DICT`):**
+    - Use standard options like `default`, `min`, `max`, `step` for numerical types.
+    - Use `multiline` for STRING inputs.
+    - Use `forceInput: True` for custom datatypes or types that should *always* be inputs, never widgets.
+- **Return Values:** The main function *must* return a tuple with values corresponding exactly in order and type to `RETURN_TYPES`. Ensure return types are correct even during error conditions where possible.
+- **Datatypes:** Use standard ComfyUI types (e.g., `INT`, `FLOAT`, `STRING`, `IMAGE`, `MASK`, `MODEL`, `CLIP`, `VAE`, `LATENT`, `CONDITIONING`). Custom types are possible but require `forceInput`.
+- **Wildcard Inputs (`*`)**: Use sparingly. If using `"*"`, the node must be prepared to handle any datatype and potentially skip backend validation (e.g., by accepting `input_types` in `VALIDATE_INPUTS`).
+
+## Hidden Inputs
+- Use the `"hidden"` dictionary in `INPUT_TYPES` to access specific server information.
+- **`"unique_id": "UNIQUE_ID"`:** Gets the node's unique ID from the workflow.
+- **`"prompt": "PROMPT"`:** Gets the full prompt JSON structure.
+- **`"extra_pnginfo": "EXTRA_PNGINFO"`:** Gets a dictionary to which metadata can be added for saving in output PNGs.
+
+## Node Lifecycle & Behavior
+- **`IS_CHANGED(self, ...)`:** Implement this method for inputs (often hidden/internal ones like prompts or seeds) where the *value* itself might not change, but its *meaning* or the desired output does. Return a hash or unique value based on the relevant changing data. This helps ComfyUI invalidate caches correctly.
+- **`VALIDATE_INPUTS(self, ...)`:** Implement this optional method to perform custom validation *before* the main function executes. Return `True` if valid, `False` or raise an exception if invalid. Can accept `input_types` argument to handle wildcard inputs.
+- **State:** Avoid storing excessive state directly on the node class instance if possible, as node instances might be reused unexpectedly. Prefer recalculating based on inputs.
+
+## Error Handling & Logging
+- Use standard Python `try...except` blocks for operations that might fail (e.g., file access, model loading, complex computations).
+- Provide informative error messages using `print()` or Python's `logging` module.
+- Ensure the node returns data matching `RETURN_TYPES` even in case of handled errors (e.g., return default values or empty structures), or raise an exception for unrecoverable errors.

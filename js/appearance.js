@@ -13,7 +13,7 @@ const COLOR_THEMES = {
 
 // Updated NODE_COLORS map
 const NODE_COLORS = {
-    "Slider Stacker": "purple", 
+    "Slider Stacker": "purple",
     "Slider Receiver": "purple", // Added receiver, same color
     // Add other nodes here if needed
  };
@@ -30,7 +30,6 @@ shuffleArray(colorKeys);  // Shuffle the color themes initially
 
 function setNodeColors(node, theme) {
     if (!theme) {return;}
-    node.shape = "box"; // Apply box shape if desired
     if(theme.nodeColor && theme.nodeBgColor) {
         node.color = theme.nodeColor;
         node.bgcolor = theme.nodeBgColor;
@@ -62,4 +61,7 @@ const ext = {
     }
 };
 
-app.registerExtension(ext); 
+// Add a console log for loading confirmation
+// console.log("Loaded Dynamic Sliders Stack Appearance Script");
+
+app.registerExtension(ext);

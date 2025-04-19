@@ -1,0 +1,52 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+ # ComfyUI Frontend (JavaScript) Node Development Guidelines
+
+These rules supplement general clean code guidelines and focus specifically on creating JavaScript frontend code for ComfyUI custom nodes, based on official documentation patterns.
+
+## Extension Structure
+- **Use `app.registerExtension({...})`:** Define all frontend logic within this structure.
+- **Provide a unique `name`:** Use a pattern like `"Comfy.MyAuthorName.MyNodeOrFeatureName"`.
+- **Use appropriate hooks:** Implement methods within the extension object corresponding to ComfyUI hooks (`nodeCreated`, `beforeRegisterNodeDef`, `setup`, etc.).
+
+## Key JavaScript Hooks
+- **`beforeRegisterNodeDef(nodeType, nodeData, app)`:**
+    - Called *once per node type* before registration.
+    - Use this to modify the *prototype* for all future instances of a specific node type.
+    - Identify the target node type using `nodeData.name` (the internal Python class name mapping key).
+    - Common use: Hijacking existing prototype methods (e.g., `onDrawForeground`, `onConfigure`, `onConnectionsChange`) to add custom behavior. Remember to store and call the original method using `originalMethod.apply(this, arguments)`.
+- **`nodeCreated(node)`:**
+    - Called *every time* a specific node *instance* is created (either new or loaded).
+    - Use this for instance-specific setup, like adding listeners to that node's widgets or applying initial state based on properties.
+    - Identify the target node using `node.type` (internal name) or `node.title` (display name), or custom checks.
+- **`setup(app)`:**
+    - Called once after the core UI (graph, canvas) is initialized but before nodes might be loaded.
+    - Use for global setup, adding overall UI elements, or registering global listeners.
+- **`nodeSetup(node)` / `loadedGraphNode(node)`:** (Often used interchangeably or via hijacking `onConfigure`/`onAdded` within `beforeRegisterNodeDef`)
+    - Called when nodes are loaded as part of a workflow.
+    - Useful for applying state or UI modifications to existing nodes based on saved workflow data.
+
+## Widget Manipulation
+- **Access Widgets:** Use `node.widgets` (an array) or helper functions like `node.widgets.find(w => w.name === 'widget_name')`.
+- **Intercept Value Changes:** Use `Object.defineProperty(widget, 'value', { get(){...}, set(newVal){...} })` to react when a widget's value is changed by the user or programmatically.
+- **Dynamic Visibility (Standard Method):**
+    - **Hide:** Set `widget.hidden = true; widget.computeSize = () => [0, -4];`
+    - **Show:** Set `widget.hidden = false; widget.computeSize = originalComputeSize || null;` (Restore cached original `computeSize` function or set to null/default).
+    - Cache original widget properties (`type`, `computeSize`, `hidden`) before modifying them for hiding.
+- **Modifying Other Properties:** You can change `widget.type`, `widget.options`, `widget.name` etc., but be cautious as it might break expected behavior.
+
+## Node Appearance & Drawing
+- **Basic Styling:** Set `node.bgcolor`, `node.color`, `node.shape` directly on the node instance (often in `nodeCreated` or hijacked `onAdded`/`onConfigure`).
+- **Advanced Styling (CSS):** Inject CSS using `document.createElement('style')` and `document.head.appendChild()` for complex rules or overriding theme styles. Use specific selectors targeting node type (`[data-type="NodeType"]`) or title (`[title="NodeTitle"]`) and potentially internal elements (`.litenode-title`, `.widget-container`). Use `!important` judiciously.
+- **Custom Drawing (`onDrawForeground`):** Hijack `nodeType.prototype.onDrawForeground` in `beforeRegisterNodeDef`. Use the `ctx` (CanvasRenderingContext2D) argument to draw directly onto the node's canvas *after* the default node is drawn. Useful for overlays or completely custom looks. Call the original method first.
+- **Redrawing:** After making visual changes (widget visibility, color, size), call `node.setDirtyCanvas(true, true)` to tell LiteGraph to redraw. If node dimensions changed, calculate the new size (`node.computeSize()`) and set it (`node.setSize([w, h])`), preserving width if only height changed.
+- **Use `requestAnimationFrame`:** Wrap UI updates (especially those involving size or visibility changes) in `requestAnimationFrame(() => { ... })` to ensure they run after the browser has finished its current rendering cycle, preventing layout issues and race conditions.
+
+## Compatibility & Best Practices
+- **Identify Nodes Reliably:** Check both `node.type` (internal name) and `node.title` (display name) or use specific widget checks, as titles can sometimes be changed by users or other nodes.
+- **Minimize Core Hijacking:** Avoid modifying core `app` or `LiteGraph` prototype methods unless absolutely necessary, as this is prone to break with ComfyUI updates or conflicts with other extensions.
+- **Check for Existence:** Always check if objects and methods exist before using them (e.g., `if (node.graph) { node.graph.setDirtyCanvas(...) }`, `if (originalMethod) { originalMethod.apply(...) }`).
+- **Clean Console:** Remove debug `console.log` statements before finalizing, keeping only essential loading messages or error logs.
