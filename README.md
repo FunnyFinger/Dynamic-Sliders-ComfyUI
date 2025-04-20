@@ -16,6 +16,15 @@ A custom node pack for **ComfyUI** providing a stack of named sliders with dynam
 
 ---
 
+##  Workflow
+
+- An Example workflow is attached with the following image, just drag and drop this image in ComfyUI Canvas:
+
+<div align="center">
+  <img src="example_workflow.png" alt="Slider Stacker and Slider Receiver" />
+</div>
+
+---
 ## 🎥 Demo
 
 ### Contextual Features
@@ -75,12 +84,12 @@ A custom node pack for **ComfyUI** providing a stack of named sliders with dynam
 ### Slider Stacker
 
 - **Inputs**:
-  - `slider_max_strength` (FLOAT): The master maximum value. Adjusting this scales all sliders below it.
+  - `sliders_max` (FLOAT): The master maximum value. Adjusting this scales all sliders below it.
   - `slider_count` (INT): Controls how many slider rows are visible and processed (1–50).
   - `slider_name_{i}` (STRING): A text field to name or describe the slider (optional).
-  - `({i})` (FLOAT Widget): The individual weight for this slider (0.0–2.0). Adjusting this updates the `slider_max_strength` if this slider becomes the new maximum.
-  - **Sum Lock Toggle**: A toggle to lock the total sum of all slider values. When enabled, adjusting one slider redistributes the difference proportionally across the other sliders.
-  - **Sliders Sum Widget**: Displays the total sum of all slider values in real-time.
+  - `({i})` (FLOAT Widget): The individual weight for this slider (0.0–2.0). Adjusting this updates the `sliders_max` if this slider becomes the new maximum.
+  - `sliders_sum` (FLOAT): Adjust this to change the total sum of all sliders *while preserving their relative differences* (when Sum Lock is off). Also displays the current sum.
+  - **Sum Lock Toggle**: A toggle to lock the total sum of all slider values. When enabled, adjusting one slider redistributes the difference proportionally across the other sliders to maintain the locked sum. When enabled, the `sliders_sum` field becomes read-only.
 
 - **Output**:
   - `SLIDER_WEIGHTS` (STRING): A comma-separated string of the weight values for sliders 1 through `slider_count`, formatted to two decimal places (e.g., "1.00, 0.50, 0.75").
@@ -145,6 +154,19 @@ Then restart ComfyUI.
 
 ---
 
+## 🚀 Usage Instructions
+
+1. Add the **Dynamic Sliders Stack** node to your graph.
+2. Set the `slider_count` field (e.g., 5 sliders).
+3. Adjust the maximum value for the highest value slider via `sliders_max` and all sliders will adjust proportionally.
+4. Adjust the target total sum value for all sliders via `sliders_sum` and all sliders will adjust accordingly while maintaining their offsets (only effective when Sum Lock is off).
+5. Optionally set individual titles for each slider.
+6. Adjust the sliders as needed in many modes: individually, proportionally (via `sliders_max`), offset (via `sliders_sum` with lock off), sliders_sum with sum-lock mode, individually with sum-lock mode.
+7. Connect the `SLIDER_WEIGHTS` output port to the slider receiver node and set the index to the required slider number.
+8. Combine this custom node with other custom nodes like prompt composer to give controllable weight for parts of your prompt.
+9. Right-click the node for utilities such as Average All, Reset All, Max All and Min All.
+
+---
 ## 🎯 Contributing
 
 We welcome contributions! If you have suggestions for improvements or new features, please [open an issue](https://github.com/FunnyFinger/Dynamic_Sliders_stack/issues) or [submit a pull request](https://github.com/FunnyFinger/Dynamic_Sliders_stack/pulls).
