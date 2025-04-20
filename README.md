@@ -104,11 +104,44 @@ A custom node pack for **ComfyUI** providing a stack of named sliders with dynam
 
 ---
 
-## 🛠️ Installation
+## 📦 Installation Methods
 
-1. Ensure the folder containing these files is named `Dynamic_sliders_stack`.
-2. Place the `Dynamic_sliders_stack` folder inside your ComfyUI `custom_nodes` directory.
-3. Restart ComfyUI.
+Choose any method that suits your setup:
+
+### ✅ Method 1: Via ComfyUI Manager (Recommended)
+
+1. Open ComfyUI.
+2. Click on the **Manager** tab (top bar).
+3. Go to **Install Custom Nodes**.
+4. Paste this URL into the install field:
+
+   ```
+   https://github.com/FunnyFinger/Dynamic_Sliders_stack.git
+   ```
+
+5. Click **Install**.
+6. Restart ComfyUI.
+
+---
+
+### 🧰 Method 2: Manual Git Clone
+
+```bash
+cd YOUR_COMFYUI_PATH/custom_nodes
+git clone https://github.com/FunnyFinger/Dynamic_Sliders_stack.git
+```
+
+Then restart ComfyUI.
+
+---
+
+### 📁 Method 3: Manual ZIP Download
+
+1. Go to the GitHub repo: [Dynamic Sliders Stack](https://github.com/FunnyFinger/Dynamic_Sliders_stack).
+2. Click the green **Code** button → **Download ZIP**.
+3. Extract the ZIP file.
+4. Move the extracted folder into your ComfyUI `custom_nodes/` directory.
+5. Restart ComfyUI.
 
 ---
 
