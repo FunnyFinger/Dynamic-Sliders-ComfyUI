@@ -156,15 +156,16 @@ Then restart ComfyUI.
 
 ## 🚀 Usage Instructions
 
-1. Add the **Dynamic Sliders Stack** node to your graph.
-2. Set the `slider_count` field (e.g., 5 sliders).
-3. Adjust the maximum value for the highest value slider via `sliders_max` and all sliders will adjust proportionally.
-4. Adjust the target total sum value for all sliders via `sliders_sum` and all sliders will adjust accordingly while maintaining their offsets (only effective when Sum Lock is off).
-5. Optionally set individual titles for each slider.
-6. Adjust the sliders as needed in many modes: individually, proportionally (via `sliders_max`), offset (via `sliders_sum` with lock off), sliders_sum with sum-lock mode, individually with sum-lock mode.
-7. Connect the `SLIDER_WEIGHTS` output port to the slider receiver node and set the index to the required slider number.
-8. Combine this custom node with other custom nodes like prompt composer to give controllable weight for parts of your prompt.
-9. Right-click the node for utilities such as Average All, Reset All, Max All and Min All.
+1. **Add the Nodes:** Double-click on the ComfyUI canvas or right-click -> "Add Node". Search for "Slider Stacker" or "Slider Receiver". You can also find them under the "Dynamic Sliders Stack" category.
+2. Add the **Sliders Stacker** node to your graph.
+3. Set the `slider_count` field (e.g., 5 sliders).
+4. Adjust the maximum value for the highest value slider via `sliders_max` and all sliders will adjust proportionally.
+5. Adjust the target total sum value for all sliders via `sliders_sum` and all sliders will adjust accordingly while maintaining their offsets (only effective when Sum Lock is off).
+6. Optionally set individual titles for each slider.
+7. Adjust the sliders as needed in many modes: individually, proportionally (via `sliders_max`), offset (via `sliders_sum` with lock off), sliders_sum with sum-lock mode, individually with sum-lock mode.
+8. Connect the `SLIDER_WEIGHTS` output port to the **Sliders Receiver** node (add this node the same way as the Stacker) and set the index to the required slider number.
+9. Combine this custom node with other custom nodes like prompt composer to give controllable weight for parts of your prompt.
+10. Right-click the **Slider Stacker** node for utilities such as Average All, Reset All, Max All and Min All.
 
 ---
 ## 🎯 Contributing
