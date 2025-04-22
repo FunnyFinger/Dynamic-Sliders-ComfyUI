@@ -1,0 +1,15 @@
+# pyproject.toml
+[project]
+name = "Dynamic_Sliders_stack"
+description = "A custom node for ComfyUI to have many sliders with interactive dynamic behavior."
+version = "2.0.0"
+license = "LICENSE
+dependencies = []
+
+[project.urls]
+Repository = "https://github.com/FunnyFinger/Dynamic_Sliders_stack"
+
+[tool.comfy]
+PublisherId = "funnyfinger"
+DisplayName = "Dynamic Sliders Stack"
+# Icon = ""
